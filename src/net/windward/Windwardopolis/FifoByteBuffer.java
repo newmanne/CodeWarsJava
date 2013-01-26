@@ -6,6 +6,7 @@ public class FifoByteBuffer
 {
 //C# TO JAVA CONVERTER WARNING: Unsigned integer types have no direct equivalent in Java:
 //ORIGINAL LINE: private readonly byte[] _buffer;
+    //cheng is here
 	private byte[] _buffer;
 	private int _endIndex;
 	private int _startIndex;

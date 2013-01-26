@@ -24,10 +24,10 @@ import java.io.IOException;
  */
 public class MyPlayerBrain implements net.windward.Windwardopolis.AI.IPlayerAI {
     // bugbug - put your team name here.
-    private static String NAME = "James Gosling";
+    private static String NAME = "Tejas, Zongyi, Cheng, Neil";
 
     // bugbug - put your school name here. Must be 11 letters or less (ie use MIT, not Massachussets Institute of Technology).
-    public static String SCHOOL = "Windward U.";
+    public static String SCHOOL = "UofT.";
 
     /**
      * The name of the player.
@@ -186,6 +186,7 @@ public class MyPlayerBrain implements net.windward.Windwardopolis.AI.IPlayerAI {
             if (plyrStatus != getMe()) {
                 return;
             }
+
             Point ptDest = null;
             java.util.ArrayList<Passenger> pickup = new java.util.ArrayList<Passenger>();
             switch (status) {
@@ -202,7 +203,6 @@ public class MyPlayerBrain implements net.windward.Windwardopolis.AI.IPlayerAI {
                     break;
                 case PASSENGER_DELIVERED:
                 case PASSENGER_ABANDONED:
-                	System.out.println("Hi" + plyrStatus.getPassengersDelivered());
                     pickup = AllPickups(plyrStatus, passengers);
                     ptDest = pickup.get(0).getLobby().getBusStop();
                     break;

@@ -181,51 +181,66 @@ public class MyPlayerBrain implements net.windward.Windwardopolis.AI.IPlayerAI {
      */
     public final void GameStatus(PlayerAIBase.STATUS status, Player plyrStatus, java.util.ArrayList<Player> players, java.util.ArrayList<Passenger> passengers) {
 
-        // bugbug - Framework.cs updates the object's in this object's Players, Passengers, and Companies lists. This works fine as long
+    	  // bugbug - Framework.cs updates the object's in this object's Players, Passengers, and Companies lists. This works fine as long
         // as this app is single threaded. However, if you create worker thread(s) or respond to multiple status messages simultaneously
         // then you need to split these out and synchronize access to the saved list objects.
 
         try {
-            // bugbug - we return if not us because the below code is only for when we need a new path or our limo hit a bus stop.
-            // if you want to act on other players arriving at bus stops, you need to remove this. But make sure you use Me, not
-            // plyrStatus for the Player you are updatiing (particularly to determine what tile to start your path from).
-            if (plyrStatus != getMe()) {
-                return;
-            }
+           
 
-            Point ptDest = null;
-            java.util.ArrayList<Passenger> pickup = new java.util.ArrayList<Passenger>();
             switch (status) {
                 case UPDATE:
                     return;
-                case NO_PATH:
-                case PASSENGER_NO_ACTION:
-                    if (plyrStatus.getLimo().getPassenger() == null) {
-                        pickup = SortPassengers(getMe(), AllPickups(plyrStatus, passengers), players);
-                        ptDest = pickup.get(0).getLobby().getBusStop();
-                    } else {
-                        ptDest = plyrStatus.getLimo().getPassenger().getDestination().getBusStop();
+            }
+
+            ArrayList<PassengerWithScore> passengerScores = new ArrayList<PassengerWithScore>();
+            java.util.ArrayList<Passenger> pickup = new java.util.ArrayList<Passenger>();
+            Point ptDest = null;
+            if (getMe().getLimo().getPassenger() != null)
+            {
+                ArrayList<PassengerWithScore> selfPassengerScore = new ArrayList<PassengerWithScore>();
+                for (int j = 0; j < getCompanies().size(); j++)
+                {
+                    double score = calculateHeursitics(getMe(), getCompanies().get(j), getMe().getLimo().getPassenger(), players);
+
+                    selfPassengerScore.add(new PassengerWithScore(getMe().getLimo().getPassenger(),SimpleAStar.CalculatePath(getGameMap(), getMe().getLimo().getMapPosition(), getCompanies().get(j).getBusStop()),
+                            score));
+                }
+                Collections.sort(selfPassengerScore, new PassengerScoreComparator());
+                java.util.ArrayList<Passenger> availPassengers = AllPickups(getMe(), passengers);
+                for (int i = 0; i < availPassengers.size(); i++)
+                {
+                    for (int j = 0; j < getCompanies().size(); j++)
+                    {
+                        double score = calculateHeursitics(getMe(), getCompanies().get(j), availPassengers.get(i), players);
+                        passengerScores.add(new PassengerWithScore(availPassengers.get(i),SimpleAStar.CalculatePath(getGameMap(), getMe().getLimo().getMapPosition(), getCompanies().get(j).getBusStop()),
+                                score));
+
                     }
-                    break;
-                case PASSENGER_DELIVERED:
-                case PASSENGER_ABANDONED:
-                    pickup = SortPassengers(getMe(), AllPickups(plyrStatus, passengers), players);
-                    ptDest = pickup.get(0).getLobby().getBusStop();
-                    break;
-                case PASSENGER_REFUSED:
-                	// Get all companies with no enemies
-                	List<Company> companiesWithNoEnemies = getCompaniesWithNoEnemies(plyrStatus);
-                	// Filter them by closest company
-                	Company closestCompany = getClosestCompanyToMe(getMe(), companiesWithNoEnemies);
-                    ptDest = closestCompany.getBusStop();
-                    break;
-                case PASSENGER_DELIVERED_AND_PICKED_UP:
-                case PASSENGER_PICKED_UP:
-                    pickup = SortPassengers(getMe(), AllPickups(plyrStatus, passengers), players);
-                    ptDest = plyrStatus.getLimo().getPassenger().getDestination().getBusStop();
-                    break;
-                default:
-                    throw new RuntimeException("unknown status");
+                }
+                ptDest = selfPassengerScore.get(0).passenger.getDestination().getBusStop();
+            }
+            else
+            {
+                java.util.ArrayList<Passenger> availPassengers = AllPickups(getMe(), passengers);
+                for (int i = 0; i < availPassengers.size(); i++)
+                {
+                    for (int j = 0; j < getCompanies().size(); j++)
+                    {
+                        double score = calculateHeursitics(getMe(), getCompanies().get(j), availPassengers.get(i), players);
+                        passengerScores.add(new PassengerWithScore(availPassengers.get(i),SimpleAStar.CalculatePath(getGameMap(), getMe().getLimo().getMapPosition(), getCompanies().get(j).getBusStop()),
+                        score));
+
+                    }
+                }
+                Collections.sort(passengerScores, new PassengerScoreComparator());
+                ptDest = passengerScores.get(0).passenger.getDestination().getBusStop();
+            }
+
+
+            for (int i = 0; i <passengerScores.size(); i++)
+            {
+                pickup.add(passengerScores.get(i).passenger);
             }
 
             // get the path from where we are to the dest.
@@ -317,8 +332,8 @@ public class MyPlayerBrain implements net.windward.Windwardopolis.AI.IPlayerAI {
     	double aiWithEnemyDropOff = 0;
     	
     	double futureTimeDropOff = 0;
-    	System.out.println(totalTime);
-    	System.out.println(enemyAtDropOff);
+    	System.out.println("Total Time: " + totalTime);
+    	System.out.println("Penalty For DropOff: " + enemyAtDropOff);
     	double overallScore = 10*points - 0.1*totalTime - 0.05*minOtherAIDistanceToPassenger - enemyAtDropOff;
     	
     	return overallScore;
@@ -328,7 +343,7 @@ public class MyPlayerBrain implements net.windward.Windwardopolis.AI.IPlayerAI {
 	private double getEnemiesAtDropOffScore(Passenger passenger, Company company, double totalTime) {
     	List<Passenger> passengersAtCompany = company.getPassengers();
     	double score = 0;
-    	double penalty = 10;
+    	double penalty = 100;
     	for (Passenger passengerAtCompany : passengersAtCompany) {
 			if (passenger.getEnemies().contains(passengerAtCompany)) {
 				score += penalty / totalTime ;

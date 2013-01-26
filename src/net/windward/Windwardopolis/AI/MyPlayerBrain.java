@@ -223,13 +223,9 @@ public class MyPlayerBrain implements net.windward.Windwardopolis.AI.IPlayerAI {
                 java.util.ArrayList<Passenger> availPassengers = AllPickups(getMe(), passengers);
                 for (int i = 0; i < availPassengers.size(); i++)
                 {
-                    for (int j = 0; j < getCompanies().size(); j++)
-                    {
-                        double score = calculateHeursitics(getMe(), getCompanies().get(j), availPassengers.get(i), players);
-                        passengerScores.add(new PassengerWithScore(availPassengers.get(i),SimpleAStar.CalculatePath(getGameMap(), availPassengers.get(i).getLobby().getBusStop(), getCompanies().get(j).getBusStop()),
-                        score, getCompanies().get(j)));
-
-                    }
+                    double score = calculateHeursitics(getMe(),  availPassengers.get(i).getDestination(), availPassengers.get(i), players);
+                    passengerScores.add(new PassengerWithScore(availPassengers.get(i),SimpleAStar.CalculatePath(getGameMap(), availPassengers.get(i).getLobby().getBusStop(), availPassengers.get(i).getDestination().getBusStop()),
+                    score, availPassengers.get(i).getDestination()));
                 }
                 Collections.sort(passengerScores, new PassengerScoreComparator());
                 ptDest = passengerScores.get(0).company.getBusStop();
@@ -238,13 +234,12 @@ public class MyPlayerBrain implements net.windward.Windwardopolis.AI.IPlayerAI {
             
 
 
-            for (int i = 0; i <passengerScores.size(); i++)
-            {
-                pickup.add(passengerScores.get(i).passenger);
-            }
+
+            pickup.addAll(AllPickups(getMe(), passengers));
+
 
             // get the path from where we are to the dest.
-            java.util.ArrayList<Point> path = CalculatePathPlus1(plyrStatus, ptDest);
+            java.util.ArrayList<Point> path = CalculatePathPlus1(getMe(), ptDest);
 
             // update our saved Player to match new settings
             if (path.size() > 0) {
@@ -321,21 +316,9 @@ public class MyPlayerBrain implements net.windward.Windwardopolis.AI.IPlayerAI {
         	timeToDropOffFromPassenger = SimpleAStar.CalculatePath(getGameMap(),passenger.getLobby().getBusStop(),company.getBusStop()).size();;
     	}
     	
-    	double minOtherAIDistanceToPassenger = 0;
-    	if (!me.getLimo().equals(passenger.getCar())){
-    		minOtherAIDistanceToPassenger = getMinDistanceToPassenger(me, passenger, players);
-    	}
-    	
     	double totalTime = timeToPassenger + timeToDropOffFromPassenger;
-    	double enemyAtDropOff = getEnemiesAtDropOffScore(passenger, company, totalTime); 
     	
-    	double aiWithEnemyDropOff = 0;
-    	
-    	double futureTimeDropOff = 0;
-    	//System.out.println("Total Time: " + totalTime);
-    	//System.out.println("Penalty For DropOff: " + enemyAtDropOff);
-    	double overallScore = 10*points - 0.1*totalTime - 0.05*minOtherAIDistanceToPassenger - enemyAtDropOff;
-    	
+    	double overallScore = points/totalTime;
     	return overallScore;
     }
     

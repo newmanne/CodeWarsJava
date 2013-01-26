@@ -18,6 +18,12 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
 
 /**
  * The sample C# AI. Start with this project but write your own code as this is a very simplistic implementation of the AI.
@@ -28,6 +34,8 @@ public class MyPlayerBrain implements net.windward.Windwardopolis.AI.IPlayerAI {
 
     // bugbug - put your school name here. Must be 11 letters or less (ie use MIT, not Massachussets Institute of Technology).
     public static String SCHOOL = "Windward U.";
+    
+    private static Random random = new Random();
 
     /**
      * The name of the player.
@@ -207,13 +215,11 @@ public class MyPlayerBrain implements net.windward.Windwardopolis.AI.IPlayerAI {
                     ptDest = pickup.get(0).getLobby().getBusStop();
                     break;
                 case PASSENGER_REFUSED:
-                    //add in random so no refuse loop
-                    for (Company cpy : getCompanies()) {
-                        if (cpy != plyrStatus.getLimo().getPassenger().getDestination()) {
-                            ptDest = cpy.getBusStop();
-                            break;
-                        }
-                    }
+                	// Get all companies with no enemies
+                	List<Company> companiesWithNoEnemies = getCompaniesWithNoEnemies(plyrStatus);
+                	// Filter them by closest company
+                	Company closestCompany = getClosestCompanyToMe(getMe(), companiesWithNoEnemies);
+                    ptDest = closestCompany.getBusStop();
                     break;
                 case PASSENGER_DELIVERED_AND_PICKED_UP:
                 case PASSENGER_PICKED_UP:
@@ -243,6 +249,19 @@ public class MyPlayerBrain implements net.windward.Windwardopolis.AI.IPlayerAI {
         }
     }
 
+	private List<Company> getCompaniesWithNoEnemies(Player plyrStatus) {
+		// Go somewhere where an enemy is not
+		List<Company> companiesToConsider = new ArrayList<Company>(getCompanies());
+		for (Company company : getCompanies()) {
+		    for (Passenger enemy : plyrStatus.getLimo().getPassenger().getEnemies()) {
+		    	if (enemy.getLobby().equals(company)) {
+		    		companiesToConsider.remove(company);
+		    	}
+		    }
+		}
+		return companiesToConsider;
+	}
+
     private java.util.ArrayList<Point> CalculatePathPlus1(Player me, Point ptDest) {
         java.util.ArrayList<Point> path = SimpleAStar.CalculatePath(getGameMap(), me.getLimo().getMapPosition(), ptDest);
         // add in leaving the bus stop so it has orders while we get the message saying it got there and are deciding what to do next.
@@ -262,5 +281,18 @@ public class MyPlayerBrain implements net.windward.Windwardopolis.AI.IPlayerAI {
 
         //add sort by random so no loops for can't pickup
         return pickup;
+    }
+    
+    private Company getClosestCompanyToMe(Player me, List<Company> companies) {
+    	Company closestCompany = null;
+    	int min = Integer.MAX_VALUE;
+    	for (Company company : companies) {
+    		int size = CalculatePathPlus1(me, company.getBusStop()).size();
+    		if (size < min) {
+    			min = size;
+    			closestCompany = company;
+    		}
+    	}
+		return closestCompany;
     }
 }

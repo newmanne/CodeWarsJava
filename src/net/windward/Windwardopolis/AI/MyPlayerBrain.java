@@ -18,6 +18,9 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 
 /**
  * The sample C# AI. Start with this project but write your own code as this is a very simplistic implementation of the AI.
@@ -195,7 +198,7 @@ public class MyPlayerBrain implements net.windward.Windwardopolis.AI.IPlayerAI {
                 case NO_PATH:
                 case PASSENGER_NO_ACTION:
                     if (plyrStatus.getLimo().getPassenger() == null) {
-                        pickup = AllPickups(plyrStatus, passengers);
+                        pickup = SortPassengers(getMe(), AllPickups(plyrStatus, passengers));
                         ptDest = pickup.get(0).getLobby().getBusStop();
                     } else {
                         ptDest = plyrStatus.getLimo().getPassenger().getDestination().getBusStop();
@@ -203,7 +206,7 @@ public class MyPlayerBrain implements net.windward.Windwardopolis.AI.IPlayerAI {
                     break;
                 case PASSENGER_DELIVERED:
                 case PASSENGER_ABANDONED:
-                    pickup = AllPickups(plyrStatus, passengers);
+                    pickup = SortPassengers(getMe(), AllPickups(plyrStatus, passengers));
                     ptDest = pickup.get(0).getLobby().getBusStop();
                     break;
                 case PASSENGER_REFUSED:
@@ -217,7 +220,7 @@ public class MyPlayerBrain implements net.windward.Windwardopolis.AI.IPlayerAI {
                     break;
                 case PASSENGER_DELIVERED_AND_PICKED_UP:
                 case PASSENGER_PICKED_UP:
-                    pickup = AllPickups(plyrStatus, passengers);
+                    pickup = SortPassengers(getMe(), AllPickups(plyrStatus, passengers));
                     ptDest = plyrStatus.getLimo().getPassenger().getDestination().getBusStop();
                     break;
                 default:
@@ -262,5 +265,23 @@ public class MyPlayerBrain implements net.windward.Windwardopolis.AI.IPlayerAI {
 
         //add sort by random so no loops for can't pickup
         return pickup;
+    }
+    private int getTotalTripDistance(Point start, Point pickSpot, Point end){
+    	int lengthToGetThem = SimpleAStar.CalculatePath(getGameMap(), start, pickSpot).size();
+    	int lengthToDropThem = SimpleAStar.CalculatePath(getGameMap(), pickSpot, end).size();
+    	return lengthToDropThem + lengthToGetThem;
+    	
+    }
+    private java.util.ArrayList<Passenger> SortPassengers(final Player me, java.util.ArrayList<Passenger> passengers){
+    	Collections.sort(passengers, new Comparator<Passenger>() {
+
+			@Override
+			public int compare(Passenger arg0, Passenger arg1) {
+				int totalTripLength1 = getTotalTripDistance(me.getLimo().getMapPosition(), arg0.getLobby().getBusStop(), arg0.getDestination().getBusStop());
+				int totalTripLength2 = getTotalTripDistance(me.getLimo().getMapPosition(), arg1.getLobby().getBusStop(), arg1.getDestination().getBusStop());
+				return  totalTripLength1 < totalTripLength2 ? 0 : 1;
+			}
+		});
+    	return passengers;
     }
 }

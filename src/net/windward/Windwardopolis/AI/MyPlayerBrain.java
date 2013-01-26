@@ -202,22 +202,21 @@ public class MyPlayerBrain implements net.windward.Windwardopolis.AI.IPlayerAI {
                 for (int j = 0; j < getCompanies().size(); j++)
                 {
                     double score = calculateHeursitics(getMe(), getCompanies().get(j), getMe().getLimo().getPassenger(), players);
-
+                    
+                    double score2 = 0;
+                    for (Passenger passenger: getCompanies().get(j).getPassengers()){
+                    	
+                    	double temp = calculateHeursitics(getMe(), passenger.getDestination(), passenger, players);
+                    	if (score2 < temp){
+                    		score2 = temp;
+                    	}
+                    }
                     selfPassengerScore.add(new PassengerWithScore(getMe().getLimo().getPassenger(),SimpleAStar.CalculatePath(getGameMap(), getMe().getLimo().getMapPosition(), getCompanies().get(j).getBusStop()),
-                            score));
+                            score, getCompanies().get(j)));
                 }
                 Collections.sort(selfPassengerScore, new PassengerScoreComparator());
-                java.util.ArrayList<Passenger> availPassengers = AllPickups(getMe(), passengers);
-                for (int i = 0; i < availPassengers.size(); i++)
-                {
-                    for (int j = 0; j < getCompanies().size(); j++)
-                    {
-                        double score = calculateHeursitics(getMe(), getCompanies().get(j), availPassengers.get(i), players);
-                        passengerScores.add(new PassengerWithScore(availPassengers.get(i),SimpleAStar.CalculatePath(getGameMap(), getMe().getLimo().getMapPosition(), getCompanies().get(j).getBusStop()),
-                                score));
-
-                    }
-                }
+                System.out.println(selfPassengerScore);
+                ptDest = selfPassengerScore.get(0).company.getBusStop();
             }
             else
             {
@@ -227,15 +226,16 @@ public class MyPlayerBrain implements net.windward.Windwardopolis.AI.IPlayerAI {
                     for (int j = 0; j < getCompanies().size(); j++)
                     {
                         double score = calculateHeursitics(getMe(), getCompanies().get(j), availPassengers.get(i), players);
-                        passengerScores.add(new PassengerWithScore(availPassengers.get(i),SimpleAStar.CalculatePath(getGameMap(), getMe().getLimo().getMapPosition(), getCompanies().get(j).getBusStop()),
-                        score));
+                        passengerScores.add(new PassengerWithScore(availPassengers.get(i),SimpleAStar.CalculatePath(getGameMap(), availPassengers.get(i).getLobby().getBusStop(), getCompanies().get(j).getBusStop()),
+                        score, getCompanies().get(j)));
 
                     }
                 }
+                Collections.sort(passengerScores, new PassengerScoreComparator());
+                ptDest = passengerScores.get(0).company.getBusStop();
             }
             
-            Collections.sort(passengerScores, new PassengerScoreComparator());
-            ptDest = passengerScores.get(0).passenger.getDestination().getBusStop();
+            
 
 
             for (int i = 0; i <passengerScores.size(); i++)
@@ -332,8 +332,8 @@ public class MyPlayerBrain implements net.windward.Windwardopolis.AI.IPlayerAI {
     	double aiWithEnemyDropOff = 0;
     	
     	double futureTimeDropOff = 0;
-    	System.out.println("Total Time: " + totalTime);
-    	System.out.println("Penalty For DropOff: " + enemyAtDropOff);
+    	//System.out.println("Total Time: " + totalTime);
+    	//System.out.println("Penalty For DropOff: " + enemyAtDropOff);
     	double overallScore = 10*points - 0.1*totalTime - 0.05*minOtherAIDistanceToPassenger - enemyAtDropOff;
     	
     	return overallScore;

@@ -1,8 +1,9 @@
 package net.windward.Windwardopolis.AI;
 
-import net.windward.Windwardopolis.api.Passenger;
+import java.awt.Point;
 
-import java.awt.*;
+import net.windward.Windwardopolis.api.Company;
+import net.windward.Windwardopolis.api.Passenger;
 
 /**
  * Created with IntelliJ IDEA.
@@ -16,9 +17,10 @@ public class PassengerWithScore {
     public Passenger passenger;
     java.util.ArrayList<Point> path;
     public double score;
+    public Company company;
 
-    public PassengerWithScore(Passenger in_passenger, java.util.ArrayList<Point> in_path, double in_score)
+    public PassengerWithScore(Passenger in_passenger, java.util.ArrayList<Point> in_path, double in_score, Company company)
     {
-        passenger = in_passenger; score = in_score; path = in_path;
+        passenger = in_passenger; score = in_score; path = in_path;this.company=company;
     }
 }

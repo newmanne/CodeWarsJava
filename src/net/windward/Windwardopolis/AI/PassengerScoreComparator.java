@@ -1,6 +1,6 @@
 package net.windward.Windwardopolis.AI;
 
-import java.util.*;
+import java.util.Comparator;
 
 /**
  * Created with IntelliJ IDEA.
@@ -14,9 +14,9 @@ public class PassengerScoreComparator implements Comparator<PassengerWithScore> 
     @Override
     public int compare(PassengerWithScore p1, PassengerWithScore p2) {
         if (p1.score > p2.score)
-            return -1;
-        if (p1.score < p2.score)
             return 1;
+        if (p1.score < p2.score)
+            return -1;
 
         return 0;
     }

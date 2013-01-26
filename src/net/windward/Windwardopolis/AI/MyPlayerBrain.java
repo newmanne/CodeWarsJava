@@ -218,7 +218,6 @@ public class MyPlayerBrain implements net.windward.Windwardopolis.AI.IPlayerAI {
 
                     }
                 }
-                ptDest = selfPassengerScore.get(0).passenger.getDestination().getBusStop();
             }
             else
             {
@@ -233,9 +232,10 @@ public class MyPlayerBrain implements net.windward.Windwardopolis.AI.IPlayerAI {
 
                     }
                 }
-                Collections.sort(passengerScores, new PassengerScoreComparator());
-                ptDest = passengerScores.get(0).passenger.getDestination().getBusStop();
             }
+            
+            Collections.sort(passengerScores, new PassengerScoreComparator());
+            ptDest = passengerScores.get(0).passenger.getDestination().getBusStop();
 
 
             for (int i = 0; i <passengerScores.size(); i++)
